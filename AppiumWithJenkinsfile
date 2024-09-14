@@ -1,0 +1,59 @@
+pipeline {
+
+    agent {
+        label 'my-agent'
+    }
+
+    environment
+    {                
+        // define your environments
+    }
+
+    stages {
+        
+        stage('Clone') {
+            steps {
+                cleanWs()
+                // Checkout your branch
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                // Clean and build maven to build the jar file
+            }
+        }
+
+
+        stage('Test'){
+            steps{
+                sh '''
+                    # --session-override --> overwrite the session
+                    # --log-level error --> remove debug meesage in console
+                    # --port 4723 --> port definition
+                    # --command-timeout 120 --> waiting period 
+                    #  a command is terminated by the control operator &, the shell executes the command in the background in a subshell.
+                    # The shell does not wait for the command to finish, and the return status is 0.
+
+                    appium --relaxed-security --log-level error --session-override --port $APPIUM_PORT &
+                    sleep 5
+                    echo "Appium has started"
+                    '''
+
+
+                sh '''
+
+                java -jar target/file.jar \
+                --plugin pretty \
+                --plugin json:target/cucumber-reports/cucumber.json \
+                --plugin html:target/cucumber-reports \
+                --plugin rerun:target/rerun.txt \
+                --glue path/to/steps_definition \
+                --monochrome \
+                --tags "@feature1,@feature2" \
+                --tags ~@ignoredTags path/to/features
+                '''
+            }
+        }
+    }
+}
